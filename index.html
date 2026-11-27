@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fahrzeugmerker</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Fahrzeuge">
+<meta name="theme-color" content="#eef2ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121a16" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-512.png">
+<style>
+/* VOICE: ruhig, sachlich, wie ein Werkzeug vom Hof
+   IDEA: die Zulassungsbescheinigung Teil I – Felder mit ihren amtlichen Codes (B, D.1, P.2 …)
+   PICTURE: der Steckbrief selbst: große Kennzahlen in einem Raster wie im Fahrzeugschein
+   COLOUR and TYPE: blassgrünes Formularpapier, dunkle Tinte, EU-Blau als Akzent; System-Schrift mit Tabellenziffern
+   LAYOUT: eine Spalte, Tab-Leiste unten, Daumen-Reichweite */
+:root{color-scheme:light dark;
+--bg:light-dark(#eef2ea,#121a16);--card:light-dark(#fff,#1b2520);--ink:light-dark(#14201a,#e6ede7);
+--mute:light-dark(#5b6a61,#97a79e);--line:light-dark(#d2dbce,#2d3b34);--eu:light-dark(#0b3fa8,#7d9bff);
+--euink:light-dark(#fff,#0c1530);--soft:light-dark(#e3eadf,#223029);--warn:light-dark(#9a3b00,#ffb37a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums;overflow-x:clip;
+padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(76px + env(safe-area-inset-bottom)) env(safe-area-inset-left)}
+main{max-width:720px;margin:0 auto;padding:14px 16px 24px}
+h1{font-size:32px;line-height:1.05;margin:8px 0 14px;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:20px;margin:22px 0 10px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:var(--ink)}
+.btn.pri{background:var(--eu);color:var(--euink);border-color:var(--eu)}
+.btn.danger{color:var(--warn)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.car:focus-visible{outline:3px solid var(--eu);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.search{width:100%;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:16px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none}
+.chip{flex:none;min-height:36px;padding:0 14px;border-radius:18px;border:1px solid var(--line);background:transparent;font-size:15px}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.list{display:grid;gap:10px;margin-top:10px}
+.car{display:grid;grid-template-columns:76px minmax(0,1fr);gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:left;width:100%}
+.thumb{width:76px;height:58px;border-radius:9px;background:var(--soft) center/cover no-repeat;display:grid;place-items:center;color:var(--mute);font-size:12px}
+.car b{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.car small{color:var(--mute);font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:6px;background:var(--soft);color:var(--mute);margin-left:4px;vertical-align:2px}
+.empty{text-align:center;color:var(--mute);padding:48px 12px}
+.banner{background:var(--soft);border-radius:12px;padding:10px 14px;margin-top:10px;font-size:15px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.plate{display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+.plate .eu{background:var(--eu);color:var(--euink);width:34px;display:grid;place-items:end center;padding-bottom:8px;font-weight:700;font-size:15px;flex:none}
+.plate .t{padding:14px 16px}
+.plate h1{margin:0 0 4px}
+.plate p{margin:0;color:var(--mute)}
+.photos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:2px;background:var(--soft)}
+.photos img{flex:none;width:100%;aspect-ratio:4/3;object-fit:cover;scroll-snap-align:start}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin-right:-1px}
+.cell{padding:10px 14px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cell .c{font-size:13px;color:var(--mute)}
+.cell .v{font-size:21px;font-weight:650;line-height:1.2;overflow-wrap:anywhere;hyphens:auto}
+.cell .v small{font-size:15px;font-weight:500;color:var(--mute)}
+.cell.wide{grid-column:1/-1}.cell.wide .v{font-size:17px;font-weight:500;white-space:pre-wrap}
+.cell .v.mono{font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:.04em}
+form .f{display:grid;gap:4px;margin-bottom:12px}
+form label{font-size:14px;color:var(--mute)}
+form label i{font-style:normal;font-weight:700;color:var(--eu);margin-right:4px}
+form input,form select,form textarea{width:100%;min-height:46px;border-radius:11px;border:1px solid var(--line);background:var(--card);padding:10px 12px;font-size:16px}
+form textarea{min-height:96px;resize:vertical}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.finrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.finres{font-size:14px;color:var(--mute);margin:-4px 0 12px;min-height:1em}
+.finres b{color:var(--ink)}
+.pgrid{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pgrid div{position:relative;width:88px;height:66px;border-radius:9px;background:var(--soft) center/cover}
+.pgrid button{position:absolute;top:-6px;right:-6px;width:28px;height:28px;border-radius:14px;border:0;background:var(--ink);color:var(--bg);font-size:16px;line-height:1}
+.add{width:88px;height:66px;border-radius:9px;border:1.5px dashed var(--line);display:grid;place-items:center;color:var(--mute);font-size:13px;text-align:center}
+.add input{display:none}
+.bar{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));background:var(--bg);padding:10px 0;display:flex;gap:10px}
+.bar .btn{flex:1}
+.quiz .grid .cell{cursor:pointer;min-height:68px}
+.quiz .cell .v.hid{color:transparent;background:var(--soft);border-radius:6px}
+.quiz .cell .v.hid::after{content:"antippen";color:var(--mute);font-size:14px;font-weight:500;position:relative;left:-100%}
+.hide{color:transparent!important;background:var(--soft);border-radius:6px;user-select:none}
+.note{color:var(--mute);font-size:14px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.box p{margin:0 0 10px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);
+display:grid;grid-template-columns:repeat(3,1fr);padding:4px env(safe-area-inset-right) calc(4px + env(safe-area-inset-bottom)) env(safe-area-inset-left);z-index:5}
+nav.tabs a{min-height:56px;display:grid;place-items:center;align-content:center;gap:2px;color:var(--mute);text-decoration:none;font-size:12px}
+nav.tabs a svg{width:24px;height:24px}
+nav.tabs a.on{color:var(--eu)}
+.fab{position:fixed;right:calc(16px + env(safe-area-inset-right));bottom:calc(88px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:28px;background:var(--eu);color:var(--euink);border:0;font-size:30px;line-height:1;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:4}
+#toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;z-index:9;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<main id="main"></main>
+<nav class="tabs">
+  <a href="#liste" data-tab="liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15.5V13l2-5h14l2 5v2.5M3 15.5h18M3 15.5V18h3v-2.5M18 15.5V18h3v-2.5"/><circle cx="7" cy="13.2" r=".6" fill="currentColor"/><circle cx="17" cy="13.2" r=".6" fill="currentColor"/></svg>Fahrzeuge</a>
+  <a href="#abfragen" data-tab="abfragen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M9.5 10a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5M12 16.5v.01"/></svg>Abfragen</a>
+  <a href="#backup" data-tab="backup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Backup</a>
+</nav>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+{
+const KRAFT=['Benzin','Diesel','Hybrid (Benzin)','Hybrid (Diesel)','Plug-in-Hybrid','Elektro','Autogas (LPG)','Erdgas (CNG)'];
+const GETR=['Schaltgetriebe','Automatik'];
+const ANTR=['Frontantrieb','Heckantrieb','Allrad'];
+const STATUS=['Bestand','Gesehen','Verkauft'];
+const WMI={WVW:'Volkswagen',WV1:'VW Nutzfahrzeuge',WV2:'VW Nutzfahrzeuge',WV3:'VW Nutzfahrzeuge',WVG:'Volkswagen (SUV)',WAU:'Audi',WUA:'Audi Sport',TRU:'Audi (Ungarn)',WBA:'BMW',WBS:'BMW M',WBY:'BMW i',WBX:'BMW (SUV)',WMW:'MINI',WDB:'Mercedes-Benz',WDD:'Mercedes-Benz',WDC:'Mercedes-Benz (SUV)',WDF:'Mercedes-Benz Transporter',W1K:'Mercedes-Benz',W1N:'Mercedes-Benz (SUV)',W1V:'Mercedes-Benz Vans',W1W:'Mercedes-Benz Vans',WME:'smart',WP0:'Porsche',WP1:'Porsche (SUV)',W0L:'Opel',W0V:'Opel',WF0:'Ford (Deutschland)',WMA:'MAN',VSS:'SEAT',VSE:'SEAT/Cupra',TMB:'Škoda',VF1:'Renault',VF3:'Peugeot',VF7:'Citroën',VR3:'Peugeot',VR7:'Citroën',VR1:'DS',VXK:'Opel/DS (Stellantis)',UU1:'Dacia',ZFA:'Fiat',ZFC:'Fiat Professional',ZAR:'Alfa Romeo',ZLA:'Lancia',ZFF:'Ferrari',ZHW:'Lamborghini',ZAM:'Maserati',ZCF:'Iveco',YV1:'Volvo',YV4:'Volvo (SUV)',YV2:'Volvo Trucks',YS2:'Scania',YS3:'Saab',SAJ:'Jaguar',SAL:'Land Rover',SAD:'Jaguar (SUV)',SCC:'Lotus',SCF:'Aston Martin',SCB:'Bentley',SCA:'Rolls-Royce',SB1:'Toyota (UK)',VNK:'Toyota (Frankreich)',NMT:'Toyota (Türkei)',JTD:'Toyota',JTE:'Toyota',JTN:'Toyota',JTM:'Toyota (SUV)',JTH:'Lexus',JHM:'Honda',SHH:'Honda (UK)',SHS:'Honda (UK)',JMZ:'Mazda',JN1:'Nissan',JN8:'Nissan (SUV)',SJN:'Nissan (UK)',VSK:'Nissan (Spanien)',JSA:'Suzuki',JS2:'Suzuki',TSM:'Suzuki (Ungarn)',JMB:'Mitsubishi',JMY:'Mitsubishi',JF1:'Subaru',KMH:'Hyundai',TMA:'Hyundai (Tschechien)',NLH:'Hyundai (Türkei)',KNA:'Kia',KNE:'Kia',U5Y:'Kia (Slowakei)',U6Y:'Kia (Slowakei)',KPT:'SsangYong/KGM',VF6:'Renault Trucks',VF9:'Bugatti',XLR:'DAF',WKK:'Setra/Kässbohrer',W09:'Kleinhersteller (DE)',W0S:'Opel Special',
+'5YJ':'Tesla','7SA':'Tesla',XP7:'Tesla (Berlin)',LRW:'Tesla (China)',LBV:'BMW (China)',LSV:'Volkswagen (China)',LVS:'Ford (China)',LYV:'Volvo (China)',L6T:'Geely/Lynk & Co',LGX:'BYD',LC0:'BYD',LDP:'Dongfeng',LSJ:'MG (SAIC)',SDB:'MG (UK)',LPS:'Polestar',YSM:'Polestar',WAP:'Alpina',WMZ:'MINI',VWV:'Volkswagen (Spanien)'};
+const LAND={W:'Deutschland',Z:'Italien',J:'Japan',K:'Südkorea',L:'China',S:'Großbritannien',Y:'Schweden/Finnland',V:'Frankreich/Spanien',T:'Tschechien/Ungarn/Schweiz',U:'Rumänien/Slowakei',N:'Türkei',X:'Niederlande/Russland',1:'USA',4:'USA',5:'USA',2:'Kanada',3:'Mexiko',9:'Brasilien'};
+const YC='ABCDEFGHJKLMNPRSTVWXY123456789';
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>v===''||v==null||isNaN(+v)?'':(+v).toLocaleString('de-DE');
+const mon=v=>{if(!v)return'';const[y,m]=v.split('-');return m?m+'/'+y:y};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const main=$('#main');
+let cars=[],q='',filt='Alle',draft=null,urls=[];
+
+/* ---------- Speicher (IndexedDB, nur auf diesem Gerät) ---------- */
+let dbp=null;
+function db(){return dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('fahrzeugmerker',1);r.onupgradeneeded=()=>r.result.createObjectStore('cars',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
+async function tx(mode,fn){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('cars',mode);const s=t.objectStore('cars');const r=fn(s);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)})}
+const loadAll=()=>tx('readonly',s=>s.getAll()).then(a=>a||[]);
+const save=c=>tx('readwrite',s=>s.put(c));
+const remove=id=>tx('readwrite',s=>s.delete(id));
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2200)}
+function freeUrls(){urls.forEach(u=>URL.revokeObjectURL(u));urls=[]}
+function url(b){const u=URL.createObjectURL(b);urls.push(u);return u}
+const title=c=>[c.marke,c.modell].filter(Boolean).join(' ')||'Ohne Namen';
+const leistung=c=>c.kw?`${c.ps||Math.round(c.kw*1.35962)} PS`:'';
+
+/* ---------- FIN auswerten (offline) ---------- */
+function decodeFin(raw){
+  const v=String(raw||'').toUpperCase().replace(/[\s-]/g,'');
+  if(!v)return null;
+  if(v.length!==17)return{err:`Die FIN hat ${v.length} statt 17 Zeichen.`};
+  if(/[IOQ]/.test(v))return{err:'Eine FIN enthält nie I, O oder Q – bitte prüfen (meist 1 bzw. 0).'};
+  const marke=WMI[v.slice(0,3)]||null, land=LAND[v[0]]||null;
+  let jahr=null;const i=YC.indexOf(v[9]);
+  if(i>=0){jahr=1980+i;const max=new Date().getFullYear()+1;while(jahr+30<=max)jahr+=30}
+  return{v,marke,land,jahr};
+}
+function finText(r){
+  if(!r)return'';if(r.err)return esc(r.err);
+  const p=[];
+  p.push(r.marke?`Hersteller: <b>${esc(r.marke)}</b>`:'Hersteller-Code unbekannt');
+  if(r.land)p.push(`Herkunft: ${esc(r.land)}`);
+  if(r.jahr)p.push(`Modelljahr-Code: <b>${r.jahr}</b> (bei EU-Autos nicht immer verlässlich)`);
+  return p.join(' · ');
+}
+
+/* ---------- Ansichten ---------- */
+function vList(){
+  const s=q.trim().toLowerCase();
+  const shown=cars.filter(c=>(filt==='Alle'||c.status===filt)&&(!s||[c.marke,c.modell,c.variante,c.fin,c.farbe,c.baujahr,c.notiz,c.kraftstoff,(c.ez||'').slice(0,4)].join(' ').toLowerCase().includes(s)))
+    .sort((a,b)=>(b.upd||0)-(a.upd||0));
+  const last=+ls.get('lastBackup')||0, old=cars.length&&Date.now()-last>14*864e5;
+  main.innerHTML=`<div class="top"><h1>Fahrzeuge</h1><span class="note">${cars.length} gespeichert</span></div>
+  <input class="search" id="q" type="search" placeholder="Suchen: Modell, FIN, Farbe, Jahr …" value="${esc(q)}" autocomplete="off">
+  <div class="chips">${['Alle',...STATUS].map(x=>`<button class="chip${x===filt?' on':''}" data-filt="${x}">${x}</button>`).join('')}</div>
+  ${old?`<div class="banner"><span>${last?'Letztes Backup ist über 2 Wochen her.':'Noch kein Backup gemacht.'}</span><a class="btn" href="#backup">Sichern</a></div>`:''}
+  <div class="list">${shown.map(c=>{const p=c.fotos&&c.fotos[0];return`<button class="car" data-go="auto-${esc(c.id)}">
+    <span class="thumb" ${p?`style="background-image:url('${url(p)}')"`:''}>${p?'':'kein Foto'}</span>
+    <span><b>${esc(title(c))}${c.status&&c.status!=='Bestand'?`<span class="tag">${esc(c.status)}</span>`:''}</b>
+    <small>${[mon(c.ez)||c.baujahr,c.km!==''&&c.km!=null?num(c.km)+' km':'',leistung(c),c.kraftstoff].filter(Boolean).map(esc).join(' · ')||'&nbsp;'}</small>
+    <small>${esc(c.variante||c.farbe||'')}</small></span></button>`}).join('')}</div>
+  ${!cars.length?`<div class="empty"><p>Noch keine Fahrzeuge.</p><p>Tippe auf <b>+</b>, um das erste Auto einzutragen.</p></div>`:!shown.length?`<div class="empty">Nichts gefunden.</div>`:''}
+  <button class="fab" data-go="neu" aria-label="Fahrzeug hinzufügen">+</button>`;
+  const qi=$('#q');qi.oninput=()=>{q=qi.value;const pos=qi.selectionStart;vList();const n=$('#q');n.focus();n.setSelectionRange(pos,pos)};
+}
+
+function cells(c){
+  return[
+    ['B','Erstzulassung',mon(c.ez)],['','Baujahr',c.baujahr],
+    ['','Kilometerstand',c.km!==''&&c.km!=null?num(c.km)+' km':''],
+    ['P.2','Leistung',c.kw?`${leistung(c)} / ${c.kw} kW`:''],
+    ['P.1','Hubraum',c.hubraum?num(c.hubraum)+' cm³':''],['P.3','Kraftstoff',c.kraftstoff],
+    ['','Getriebe',c.getriebe],['','Antrieb',c.antrieb],['R','Farbe',c.farbe],
+    ['','Vorbesitzer',c.halter],['','HU bis',mon(c.hu)],
+    ['','Einkauf',c.ek?num(c.ek)+' €':''],['','Verkauf',c.vk?num(c.vk)+' €':'']
+  ].filter(x=>x[2]!==''&&x[2]!=null);
+}
+const cellHtml=([code,l,v],cls='')=>`<div class="cell"><div class="c">${code?`<b style="color:var(--eu)">${code}</b> · `:''}${l}</div><div class="v ${cls}">${esc(v)}</div></div>`;
+
+function vDetail(id){
+  const c=cars.find(x=>x.id===id);if(!c)return go('liste');
+  main.innerHTML=`<div class="top" style="margin-bottom:10px"><a class="btn" href="#liste">‹ Zurück</a><a class="btn" href="#bearbeiten-${esc(c.id)}">Bearbeiten</a></div>
+  <article class="sheet">
+   <div class="plate"><div class="eu">D</div><div class="t"><h1>${esc(title(c))}</h1><p>${esc([c.variante,c.status].filter(Boolean).join(' · '))}</p></div></div>
+   ${c.fotos&&c.fotos.length?`<div class="photos">${c.fotos.map(b=>`<img src="${url(b)}" alt="">`).join('')}</div>`:''}
+   <div class="grid">${cells(c).map(x=>cellHtml(x)).join('')}
+   ${c.fin?`<div class="cell wide"><div class="c"><b style="color:var(--eu)">E</b> · FIN</div><div class="v mono">${esc(c.fin)}</div></div>`:''}
+   ${c.notiz?`<div class="cell wide"><div class="c">Notizen &amp; Ausstattung</div><div class="v">${esc(c.notiz)}</div></div>`:''}</div>
+  </article>
+  <p class="note">Zuletzt geändert: ${c.upd?new Date(c.upd).toLocaleString('de-DE',{dateStyle:'medium',timeStyle:'short'}):'–'}</p>`;
+}
+
+function opt(list,val){return`<option value=""></option>`+list.map(x=>`<option${x===val?' selected':''}>${x}</option>`).join('')}
+function vEdit(id){
+  const c=id?cars.find(x=>x.id===id):null;
+  if(id&&!c)return go('liste');
+  if(!draft||draft.id!==(c?c.id:'neu'))draft={id:c?c.id:'neu',fotos:c&&c.fotos?[...c.fotos]:[]};
+  const v=c||{status:'Bestand'};
+  const F=(k,l,code,type='text',extra='')=>`<div class="f"><label for="f_${k}">${code?`<i>${code}</i>`:''}${l}</label><input id="f_${k}" name="${k}" type="${type}" value="${esc(v[k])}" ${extra}></div>`;
+  const S=(k,l,code,list)=>`<div class="f"><label for="f_${k}">${code?`<i>${code}</i>`:''}${l}</label><select id="f_${k}" name="${k}">${opt(list,v[k])}</select></div>`;
+  main.innerHTML=`<div class="top"><h1>${c?'Bearbeiten':'Neues Fahrzeug'}</h1><a class="btn" href="${c?'#auto-'+esc(c.id):'#liste'}">Abbrechen</a></div>
+  <form id="form" autocomplete="off">
+   <div class="f"><label for="f_fin"><i>E</i>FIN (Fahrzeug-Ident.-Nr.)</label>
+    <div class="finrow"><input id="f_fin" name="fin" value="${esc(v.fin)}" maxlength="20" autocapitalize="characters" spellcheck="false" style="font-family:ui-monospace,Menlo,monospace;letter-spacing:.04em"><button type="button" class="btn" id="finbtn">Auswerten</button></div></div>
+   <div class="finres" id="finres">${finText(decodeFin(v.fin))}</div>
+   <div class="two">${F('marke','Marke','D.1')}${F('modell','Modell','D.3')}</div>
+   ${F('variante','Version / Ausstattungslinie','','text','placeholder="z. B. 2.0 TDI Highline"')}
+   <div class="two">${F('ez','Erstzulassung','B','month')}${F('baujahr','Baujahr','','number','inputmode="numeric" min="1900" max="2100"')}</div>
+   <div class="two">${F('km','Kilometerstand','','number','inputmode="numeric" min="0"')}${F('halter','Vorbesitzer','','number','inputmode="numeric" min="0"')}</div>
+   <div class="two">${F('kw','Leistung kW','P.2','number','inputmode="numeric" min="0"')}${F('ps','Leistung PS','','number','inputmode="numeric" min="0"')}</div>
+   <div class="two">${F('hubraum','Hubraum cm³','P.1','number','inputmode="numeric" min="0"')}${S('kraftstoff','Kraftstoff','P.3',KRAFT)}</div>
+   <div class="two">${S('getriebe','Getriebe','',GETR)}${S('antrieb','Antrieb','',ANTR)}</div>
+   <div class="two">${F('farbe','Farbe','R')}${F('hu','HU bis','','month')}</div>
+   <div class="two">${F('ek','Einkaufspreis €','','number','inputmode="numeric" min="0"')}${F('vk','Verkaufspreis €','','number','inputmode="numeric" min="0"')}</div>
+   ${S('status','Status','',STATUS)}
+   <div class="f"><label for="f_notiz">Notizen &amp; Ausstattung</label><textarea id="f_notiz" name="notiz" placeholder="z. B. Pano-Dach, AHK, Scheckheft, Steinschlag Frontscheibe">${esc(v.notiz)}</textarea></div>
+   <label class="note" style="display:block;margin-bottom:6px">Fotos</label>
+   <div class="pgrid" id="pgrid"></div>
+   <div class="bar">${c?`<button type="button" class="btn danger" id="del">Löschen</button>`:''}<button class="btn pri" type="submit">Speichern</button></div>
+  </form>`;
+  drawPhotos();
+  const fin=$('#f_fin'),kw=$('#f_kw'),ps=$('#f_ps');
+  const runFin=(fill)=>{const r=decodeFin(fin.value);$('#finres').innerHTML=finText(r);
+    if(fill&&r&&!r.err){fin.value=r.v;const m=$('#f_marke'),b=$('#f_baujahr');
+      if(r.marke&&!m.value)m.value=r.marke.replace(/ \(.*\)$/,'');
+      if(r.jahr&&!b.value)b.value=r.jahr;}};
+  $('#finbtn').onclick=()=>runFin(true);
+  fin.oninput=()=>{if(fin.value.replace(/\s/g,'').length>=17)runFin(true);else $('#finres').textContent=''};
+  kw.oninput=()=>{ps.value=kw.value?Math.round(kw.value*1.35962):''};
+  ps.oninput=()=>{kw.value=ps.value?Math.round(ps.value/1.35962):''};
+  $('#form').onsubmit=async e=>{e.preventDefault();
+    const d=Object.fromEntries(new FormData(e.target));
+    ['baujahr','km','halter','kw','ps','hubraum','ek','vk'].forEach(k=>d[k]=d[k]===''?'':+d[k]);
+    d.fin=(d.fin||'').toUpperCase().replace(/\s/g,'');
+    const rec={...(c||{}),...d,id:c?c.id:uid(),fotos:draft.fotos,upd:Date.now(),created:c?c.created:Date.now()};
+    try{await save(rec)}catch(err){toast('Speichern fehlgeschlagen: '+err.message);return}
+    try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+    draft=null;cars=await loadAll();toast('Gespeichert');go('auto-'+rec.id);};
+  const del=$('#del');if(del)del.onclick=async()=>{
+    if(!del.dataset.sure){del.dataset.sure=1;del.textContent='Wirklich löschen?';setTimeout(()=>{if(del.isConnected){del.textContent='Löschen';delete del.dataset.sure}},3500);return}
+    await remove(c.id);draft=null;cars=await loadAll();toast('Gelöscht');go('liste');};
+}
+function drawPhotos(){
+  const g=$('#pgrid');if(!g)return;
+  g.innerHTML=draft.fotos.map((b,i)=>`<div style="background-image:url('${url(b)}')"><button type="button" data-rm="${i}" aria-label="Foto entfernen">×</button></div>`).join('')+
+   `<label class="add">+ Foto<input type="file" accept="image/*" multiple id="pin"></label>`;
+  $('#pin').onchange=async e=>{for(const f of e.target.files){try{draft.fotos.push(await shrink(f))}catch(err){toast('Foto konnte nicht gelesen werden')}}drawPhotos()};
+}
+function shrink(file){return new Promise((res,rej)=>{const img=new Image();const u=URL.createObjectURL(file);
+  img.onload=()=>{const m=1400,k=Math.min(1,m/Math.max(img.width,img.height));const cv=document.createElement('canvas');cv.width=Math.round(img.width*k);cv.height=Math.round(img.height*k);
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>b?res(b):rej(),'image/jpeg',.82)};
+  img.onerror=()=>{URL.revokeObjectURL(u);rej()};img.src=u})}
+
+/* ---------- Abfragen (zum Einprägen) ---------- */
+let qid=null;
+function vQuiz(next){
+  const pool=cars.filter(c=>c.status!=='Verkauft');const src=pool.length?pool:cars;
+  if(!src.length){main.innerHTML=`<h1>Abfragen</h1><div class="empty">Trag erst ein paar Fahrzeuge ein – dann fragt dich die App hier ab.</div>`;return}
+  if(next||!src.find(c=>c.id===qid)){const o=src.filter(c=>c.id!==qid);qid=(o.length?o:src)[Math.floor(Math.random()*(o.length||src.length))].id}
+  const c=src.find(x=>x.id===qid);
+  const cs=cells(c).filter(x=>!['Einkauf','Vorbesitzer'].includes(x[1]));
+  main.innerHTML=`<h1>Abfragen</h1><p class="note" style="margin-top:-6px">Was weißt du über dieses Auto? Tippe ein Feld an, um es aufzudecken.</p>
+  <article class="sheet quiz">
+   <div class="plate"><div class="eu">D</div><div class="t"><h1>${esc(title(c))}</h1><p>${esc(c.variante||'')}</p></div></div>
+   ${c.fotos&&c.fotos.length?`<div class="photos"><img src="${url(c.fotos[0])}" alt=""></div>`:''}
+   <div class="grid">${cs.map(([code,l,v])=>`<button class="cell" style="border-top:0;border-left:0;background:none;text-align:left;font:inherit;color:inherit" data-rev><div class="c">${code?`<b style="color:var(--eu)">${code}</b> · `:''}${l}</div><div class="v hide">${esc(v)}</div></button>`).join('')||'<div class="cell wide"><div class="v">Für dieses Auto sind noch keine Daten eingetragen.</div></div>'}</div>
+  </article>
+  <div class="bar" style="position:static"><button class="btn" id="all">Alles aufdecken</button><button class="btn pri" id="nx">Nächstes Auto</button></div>`;
+  $('#all').onclick=()=>document.querySelectorAll('.quiz .v.hide').forEach(e=>e.classList.remove('hide'));
+  $('#nx').onclick=()=>{freeUrls();vQuiz(true)};
+}
+
+/* ---------- Backup ---------- */
+const b2d=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
+async function vBackup(){
+  const last=+ls.get('lastBackup')||0;
+  let pers='';try{pers=navigator.storage&&navigator.storage.persisted?(await navigator.storage.persisted()?'dauerhaft':'normal'):''}catch(e){}
+  main.innerHTML=`<h1>Backup</h1>
+  <div class="box"><p>Deine Fahrzeuge liegen <b>nur auf diesem iPhone</b> – kein Server, keine Cloud. Wenn du die App löschst oder Safari-Websitedaten löschst, sind sie weg. Deshalb ab und zu sichern.</p>
+   <p class="note">${cars.length} Fahrzeuge · Letztes Backup: ${last?new Date(last).toLocaleDateString('de-DE'):'noch nie'}${pers?` · Speicher: ${pers}`:''}</p>
+   <button class="btn pri" id="exp" style="width:100%">Backup erstellen</button>
+   <p class="note" style="margin-top:8px">Es öffnet sich das Teilen-Menü – am besten „In Dateien sichern“ wählen (z. B. iCloud Drive oder „Auf meinem iPhone“).</p></div>
+  <div class="box"><p><b>Backup einspielen</b></p><p class="note">Fahrzeuge aus einer Backup-Datei werden hinzugefügt bzw. aktualisiert – nichts wird gelöscht.</p>
+   <label class="btn" style="width:100%">Datei auswählen<input type="file" id="imp" accept="application/json,.json" style="display:none"></label></div>
+  <div class="box"><p><b>Über die FIN-Auswertung</b></p><p class="note">Die FIN wird direkt auf dem Gerät ausgewertet: Herstellercode (Stelle 1–3) und Modelljahr-Code (Stelle 10). Es wird nichts ins Internet geschickt. Modell, Motor und Ausstattung stehen nicht lesbar in der FIN – die trägst du selbst ein.</p></div>`;
+  $('#exp').onclick=async()=>{
+    const out=[];for(const c of cars)out.push({...c,fotos:await Promise.all((c.fotos||[]).map(b2d))});
+    const name=`fahrzeuge-backup-${new Date().toISOString().slice(0,10)}.json`;
+    const blob=new Blob([JSON.stringify({app:'fahrzeugmerker',v:1,exportiert:new Date().toISOString(),fahrzeuge:out})],{type:'application/json'});
+    const file=new File([blob],name,{type:'application/json'});
+    try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name})}
+      else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove()}
+      ls.set('lastBackup',Date.now());toast('Backup erstellt');vBackup()}
+    catch(e){if(e.name!=='AbortError')toast('Backup fehlgeschlagen')}};
+  $('#imp').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+    try{const d=JSON.parse(await f.text());const list=d.fahrzeuge||[];let n=0;
+      for(const c of list){if(!c||!c.id)continue;c.fotos=await Promise.all((c.fotos||[]).map(u=>fetch(u).then(r=>r.blob())));await save(c);n++}
+      cars=await loadAll();toast(n+' Fahrzeuge eingespielt');vBackup()}
+    catch(err){toast('Das ist keine gültige Backup-Datei')}};
+}
+
+/* ---------- Navigation ---------- */
+function go(h){if(location.hash==='#'+h)route();else location.hash=h}
+function route(){
+  freeUrls();
+  const h=location.hash.slice(1)||'liste';
+  const tab=h.startsWith('abfragen')?'abfragen':h.startsWith('backup')?'backup':'liste';
+  document.querySelectorAll('nav.tabs a').forEach(a=>a.classList.toggle('on',a.dataset.tab===tab));
+  if(!h.startsWith('neu')&&!h.startsWith('bearbeiten-'))draft=null;
+  if(h.startsWith('auto-'))vDetail(h.slice(5));
+  else if(h==='neu')vEdit(null);
+  else if(h.startsWith('bearbeiten-'))vEdit(h.slice(11));
+  else if(h==='abfragen')vQuiz();
+  else if(h==='backup')vBackup();
+  else vList();
+  window.scrollTo(0,0);
+}
+main.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');if(g){go(g.dataset.go);return}
+  const f=e.target.closest('[data-filt]');if(f){filt=f.dataset.filt;vList();return}
+  const r=e.target.closest('[data-rm]');if(r){draft.fotos.splice(+r.dataset.rm,1);drawPhotos();return}
+  const v=e.target.closest('[data-rev]');if(v){v.querySelector('.v').classList.remove('hide')}
+});
+window.addEventListener('hashchange',route);
+loadAll().then(a=>{cars=a;route()}).catch(()=>{main.innerHTML='<h1>Fahrzeuge</h1><div class="box">Der Speicher auf diesem Gerät ist nicht verfügbar (privater Modus?). Bitte die App normal öffnen.</div>'});
+if('serviceWorker' in navigator&&location.protocol!=='file:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+}
+</script>
+</body>
+</html>
