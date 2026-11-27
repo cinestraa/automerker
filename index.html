@@ -384,7 +384,10 @@ main.addEventListener('click',e=>{
 });
 window.addEventListener('hashchange',route);
 loadAll().then(a=>{cars=a;route()}).catch(()=>{main.innerHTML='<h1>Fahrzeuge</h1><div class="box">Der Speicher auf diesem Gerät ist nicht verfügbar (privater Modus?). Bitte die App normal öffnen.</div>'});
-if('serviceWorker' in navigator&&location.protocol!=='file:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+if('serviceWorker' in navigator&&location.protocol!=='file:'){
+  const had=!!navigator.serviceWorker.controller;let reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded&&!location.hash.match(/^#(neu|bearbeiten-)/)){reloaded=true;location.reload()}});
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{const chk=()=>r.update().catch(()=>{});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')chk()})}).catch(()=>{})}
 }
 </script>
 </body>
